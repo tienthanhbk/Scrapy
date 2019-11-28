@@ -1,0 +1,3 @@
+tutorial/data/*
+.idea/*
+__pycache__

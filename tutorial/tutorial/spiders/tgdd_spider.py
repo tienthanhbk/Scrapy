@@ -1,14 +1,18 @@
 import scrapy
 import json
-import scrapy_splash
+# import scrapy_splash
 import requests
 from scrapy.selector import Selector
 import numpy
+from scrapy.crawler import CrawlerProcess
 
 class CommentSpider (scrapy.Spider):
     name = 'comments'
 
-    url_start = 'https://www.thegioididong.com/dtdd/iphone-6-32gb-gold'
+    # url_start = 'https://www.thegioididong.com/dtdd/iphone-6-32gb-gold'
+    # url_start = 'https://www.thegioididong.com/tai-nghe/tai-nghe-ep-kanen-ip-225'
+    urls = ['https://www.thegioididong.com/tai-nghe/tai-nghe-ep-kanen-ip-225',
+            'https://www.thegioididong.com/usb/usb-sandisk-sdcz50-8gb-20-xanh-duong']
     url_api_list_comment = 'https://www.thegioididong.com/commentnew/cmt/index'
 
     start_replaced_str = """$("#comment").trigger("cmt.listpaging");$('.listcomment').html('"""
@@ -17,11 +21,15 @@ class CommentSpider (scrapy.Spider):
     objectid = 0
 
     def start_requests(self):
-
-        yield scrapy.Request(
-            url=self.url_start,
-            callback=self.parse,
-        )
+        for url in self.urls:
+            yield scrapy.Request(
+                url=url,
+                callback=self.parse,
+            )
+        # yield scrapy.Request(
+        #     url=self.url_start,
+        #     callback=self.parse,
+        # )
 
     def parse(self, response):
         # path_page_activate = 'div.pagcomment span.active'
@@ -38,10 +46,10 @@ class CommentSpider (scrapy.Spider):
 
         try:
             str_numb_page = response.css('ul.listcomment div.pagcomment a')[-2].css('a::text').extract_first()
-        except(e,):
+        except():
             str_numb_page = 1
 
-        for page_numb in range(1, int(str_numb_page) + 1):
+        for page_numb in range(8, int(str_numb_page) + 1):
             formdata = {
                 'core[call]': 'cmt.listpaging',
                 'objectid': self.objectid,
@@ -54,13 +62,24 @@ class CommentSpider (scrapy.Spider):
             selector = Selector(text=struct_text)
 
             for qa in selector.css(path_list_QA):
-                if len(qa.css('div.listreply div.reply')):
+                if len(qa.css('div.listreply div.reply')) >= 1:
                     yield {
                         'id_cmt': qa.css(path_comment_id).extract_first(),
                         'question': qa.css('div.question::text').extract_first(),
                         'answer': ''.join(qa.css('div.listreply div.reply')[0].css('div.cont::text').extract()),
+                        # 'answers': [''.join(reply.extract()) for reply in qa.css('div.listreply div.reply div.cont')],
+                        # 'time': qa.css('li.comment_ask a.time::text').extract_first(),
+                        # 'user_name': qa.css('li.comment_ask div.rowuser a strong::text').extract_first(),
+                        # 'replier_name': qa.css('li.comment_ask div.rowuser a strong::text').extract_first(),
                     }
                 else:
                     continue
-
-
+#
+# process = CrawlerProcess(settings={
+#     'FEED_FORMAT': 'jl',
+#     'FEED_URI': 'items.jl',
+#     'FEED_EXPORT_ENCODING': 'utf-8'
+# })
+#
+# process.crawl(CommentSpider)
+# process.start()
