@@ -1,0 +1,2 @@
+scrapy shell ‘url’
+scrapy crawl comments -o test.jl
