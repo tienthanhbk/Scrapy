@@ -1,3 +1,4 @@
 tutorial/data/*
 .idea/*
 __pycache__
+tutorial/comments
