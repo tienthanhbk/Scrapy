@@ -11,8 +11,7 @@ class CommentSpider (scrapy.Spider):
 
     # url_start = 'https://www.thegioididong.com/dtdd/iphone-6-32gb-gold'
     # url_start = 'https://www.thegioididong.com/tai-nghe/tai-nghe-ep-kanen-ip-225'
-    urls = ['https://www.thegioididong.com/tai-nghe/tai-nghe-ep-kanen-ip-225',
-            'https://www.thegioididong.com/usb/usb-sandisk-sdcz50-8gb-20-xanh-duong']
+    urls = ['https://www.thegioididong.com/tai-nghe/tai-nghe-ep-kanen-ip-225']
     url_api_list_comment = 'https://www.thegioididong.com/commentnew/cmt/index'
 
     start_replaced_str = """$("#comment").trigger("cmt.listpaging");$('.listcomment').html('"""
@@ -49,7 +48,7 @@ class CommentSpider (scrapy.Spider):
         except():
             str_numb_page = 1
 
-        for page_numb in range(0, int(str_numb_page) + 1):
+        for page_numb in range(1, int(str_numb_page) + 1):
             try:
                 formdata = {
                     'core[call]': 'cmt.listpaging',
@@ -58,6 +57,7 @@ class CommentSpider (scrapy.Spider):
                     'pageindex': str(page_numb),
                     'order': '1',
                 }
+                print(formdata)
                 res_script = requests.post(self.url_api_list_comment, data=formdata).text
                 struct_text = res_script.replace(self.start_replaced_str, '').replace(self.end_replaced_str, '')
                 selector = Selector(text=struct_text)
@@ -67,8 +67,7 @@ class CommentSpider (scrapy.Spider):
                         yield {
                             'id_cmt': qa.css(path_comment_id).extract_first(),
                             'question': qa.css('div.question::text').extract_first(),
-                            'answer': ''.join(qa.css('div.listreply div.reply')[0].css('div.cont::text').extract()),
-                            # 'answers': [''.join(reply.extract()) for reply in qa.css('div.listreply div.reply div.cont')],
+                            'answers': [''.join(reply.css('div.cont::text').extract()) for reply in qa.css('div.listreply div.reply')],
                             # 'time': qa.css('li.comment_ask a.time::text').extract_first(),
                             # 'user_name': qa.css('li.comment_ask div.rowuser a strong::text').extract_first(),
                             # 'replier_name': qa.css('li.comment_ask div.rowuser a strong::text').extract_first(),
